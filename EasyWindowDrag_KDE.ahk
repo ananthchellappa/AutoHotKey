@@ -334,6 +334,7 @@ return
    ^!WheelDown::Send ^{PgDn}
 +WheelDown::SendInput {ScrollLock}{Right}{ScrollLock}
 +WheelUp::SendInput {ScrollLock}{Left}{ScrollLock}
+^BackSpace::Send ^+{Left}{BackSpace}	; to get delete word backward in Excel
 #IfWinActive
 
 #IfWinActive ahk_class Chrome_WidgetWin_1
