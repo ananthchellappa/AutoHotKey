@@ -345,11 +345,45 @@ return
    ^!WheelUp::Send ^{PgUp}
    ^!WheelDown::Send ^{PgDn}
 #IfWinActive
+
 #IfWinActive ahk_exe POWERPNT.EXE
  ^;::
   FormatTime , date, , MM/dd/yy
   SendInput %date%
  Return
+
+; trying Areeb's solution 
+^+B::
+Try
+	{
+	ppt := ComObjActive("PowerPoint.Application")
+	If (ppt.ActiveWindow.Selection.Type = 2)
+		{
+		Try
+			ppt.ActiveWindow.Selection.ShapeRange.TextFrame.TextRange.Font.Color.RGB:=0xFF0000
+		}
+	
+	If (ppt.ActiveWindow.Selection.Type = 3)
+	ppt.ActiveWindow.Selection.TextRange.Font.Color.RGB:=0xFF0000
+	}
+Return
+
+^+C::
+Try
+	{
+	ppt := ComObjActive("PowerPoint.Application")
+	If (ppt.ActiveWindow.Selection.Type = 2)
+		{
+		Try
+			ppt.ActiveWindow.Selection.ShapeRange.TextFrame.TextRange.Font.Name:= "consolas"
+		}
+	
+	If (ppt.ActiveWindow.Selection.Type = 3)
+	ppt.ActiveWindow.Selection.TextRange.Font.Name:= "consolas"
+	}
+
+Return
+
 #IfWinActive
 
 #Include C:\Users\anant\Documents\Autohotkey\Notify.ahk
@@ -394,3 +428,5 @@ $!F1::
  }
  SetTitleMatchMode, 1
  return
+
+
