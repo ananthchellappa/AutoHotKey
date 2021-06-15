@@ -2,6 +2,9 @@
 ; #Warn  ; Enable warnings to assist with detecting common errors.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+; from Michael Nelson
+; The number of times alt-scrolling will cause in Notepad++
+notepadScrollAmount := 3
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>> others, please see my custom adds at end and
 ; >>>>>>>>>>>>>>>>>>>>>>>>> delete if necessary..
@@ -429,4 +432,20 @@ $!F1::
  SetTitleMatchMode, 1
  return
 
+; from Michael Nelson
 
+; Trigger on alt scroll up (!WheelUp), it will not trigger itself ($) and AHK will not cause the key to be supressed (~)
+~$!WheelUp::
+if WinActive("ahk_class Notepad++") { ; if Notepad++
+    loop % notepadScrollAmount-1  ; Loop X many more times to meet the notepadScrollAmount desired
+        send {WheelUp} ; Sends a wheelup command to windows
+}
+return
+
+; Same as wheelup but for wheeldown
+~$!WheelDown::
+if WinActive("ahk_class Notepad++") {
+    loop % notepadScrollAmount-1
+        send {WheelDown}
+}
+return
