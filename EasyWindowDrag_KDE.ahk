@@ -95,6 +95,7 @@ SysGet, Mon1, Monitor, 1
 SysGet, Mon2, Monitor, 2
  
 ; Ananth
+^!F9::
 ^!RButton::
 	Suspend
 	if A_IsSuspended 
@@ -106,11 +107,6 @@ SysGet, Mon2, Monitor, 2
     }
 Return
 
-^!F9::Suspend
-; 8/18
-;#c::Run  C:\Windows\System32\notepad.exe "\\sc-nc-fs2\achellappa\cutpaste.txt"
-;#v:: Run C:\Windows\System32\notepad.exe "C:\Users\achellappa\Desktop\cutpaste.txt"
-;#c::Run "C:\Windows\System32\notepad.exe"
 #p::LaunchPaint()
 #Escape::LaunchPaint()
 #s::LaunchSnippingTool()
