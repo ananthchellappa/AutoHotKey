@@ -46,6 +46,14 @@ IsWow64Process()
    return ret & bIsWOW64
 }
 
+FixYTURL()
+{
+	If (InStr(Clipboard, "https://www.youtube.com") = 1)
+	{
+		Clipboard := StrReplace(Clipboard, "watch?v=", "embed/")
+	}
+}
+
 ; Launch snipping tool using correct path based on 64 bit or 32 bit Windows
 LaunchSnippingTool()
 {
@@ -107,6 +115,7 @@ SysGet, Mon2, Monitor, 2
     }
 Return
 
+^#T::FixYTURL()	; CTRL WIN T
 #p::LaunchPaint()
 #Escape::LaunchPaint()
 #s::LaunchSnippingTool()
