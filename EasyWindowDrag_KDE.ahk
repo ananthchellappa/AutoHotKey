@@ -1,10 +1,16 @@
-﻿#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+#SingleInstance Force  ; from Nour Nasser
+#InstallKeybdHook ; from Nour
+#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 ; #Warn  ; Enable warnings to assist with detecting common errors.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 ; from Michael Nelson
 ; The number of times alt-scrolling will cause in Notepad++
 notepadScrollAmount := 3
+
+SetBatchLines -1 ; Nour Nasser
+SetControlDelay -1
+SetWinDelay -1 ; from Nour
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>> others, please see my custom adds at end and
 ; >>>>>>>>>>>>>>>>>>>>>>>>> delete if necessary..
@@ -394,7 +400,8 @@ Return
 
 #IfWinActive
 
-#Include C:\Users\anant\Documents\Autohotkey\Notify.ahk
+;#Include C:\Users\ac104265\Documents\Autohotkey\Notify.ahk
+#Include <Notify>
 $!Escape::
  SetTitleMatchMode, 2
  IfWinActive, Citrix XenApp
@@ -454,3 +461,51 @@ if WinActive("ahk_class Notepad++") {
         send {WheelDown}
 }
 return
+
+#Include <AccessibleObject>
+
+; from Nour Nasser, UPWK
+#If WinActive("AHK_Class MSPaintApp")
+
+^[::
+	SetKeyDelay -1, -1
+	MSPaintFontSizeAdd(-1)
+Return
+
+^]::
+	SetKeyDelay -1, -1
+	MSPaintFontSizeAdd(1)
+Return
+
+#If
+
+
+MSPaintFontSizeAdd(Value) {
+	Static FontSize_Edit_Handle := 0
+	If (!WinExist("AHK_ID " . FontSize_Edit_Handle))
+	{
+		Win := AccessibleObject.FromWindow(WinActive("AHK_Class MSPaintApp"))
+		If (!Win)
+			Return
+		FontSize_Edit := ""
+		For I, Control In Win.GetDescendants()
+		{
+			If (Control.Role = 0x2A && Control.Name = "Font Size")
+			{
+				FontSize_Edit := Control
+				Break
+			}
+		}
+		If (!FontSize_Edit)
+			Return
+
+		FontSize_Edit_Handle := FontSize_Edit.Handle
+	}
+
+	ControlFocus,, AHK_ID %FontSize_Edit_Handle%
+	ControlGetText FontSize,, AHK_ID %FontSize_Edit_Handle%
+	FontSize += Value
+	FontSize := Max(1, FontSize)
+	ControlSetText,, %FontSize%, AHK_ID %FontSize_Edit_Handle%
+	ControlSend,, {Enter}, AHK_ID %FontSize_Edit_Handle%
+}
