@@ -509,3 +509,21 @@ MSPaintFontSizeAdd(Value) {
 	ControlSetText,, %FontSize%, AHK_ID %FontSize_Edit_Handle%
 	ControlSend,, {Enter}, AHK_ID %FontSize_Edit_Handle%
 }
+
+#IfWinActive ahk_exe EXCEL.EXE
+
+; want : CTRL+ALT+LeftClick - select entire row
+; NOTE : to prevent Research pane from opening, in your PERSONAL.XLSB,
+; in ThisWorkbook, under WorkBook_Open() : Application.CommandBars("Research").Enabled = False
+^!LButton::
+	MouseGetPos, , row_number, , Left ; Get the row number where the mouse is clicked
+	Click Left ; Click the left mouse button
+	Try
+	{
+		XL := ComObjActive("Excel.Application")
+		XL.ActiveCell.EntireRow.Select
+	}
+
+Return
+
+#IfWinActive
