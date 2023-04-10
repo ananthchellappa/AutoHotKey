@@ -477,6 +477,22 @@ Return
 	MSPaintFontSizeAdd(1)
 Return
 
+
+^!d::
+	StatusBarGetText StatusText, 1, A
+	If (!StatusText) {
+		Return
+	}
+	FormatTime, DateTime,, dd/MM/yyyy,HH:mm ; update format if needed
+
+	MSPaintEnterTextMode()
+	Click
+	Sleep 100
+	ControlGetFocus TextField_ClassNN, A
+	ControlSetText %TextField_ClassNN%, %DateTime%, A
+Return
+
+
 #If
 
 
@@ -510,6 +526,22 @@ MSPaintFontSizeAdd(Value) {
 	ControlSend,, {Enter}, AHK_ID %FontSize_Edit_Handle%
 }
 
+MSPaintEnterTextMode() {
+	If (!WinExist("AHK_ID " . FontSize_Edit_Handle))
+	{
+		Win := AccessibleObject.FromWindow(WinActive("AHK_Class MSPaintApp"))
+		If (!Win)
+			Return
+		For I, Control In Win.GetDescendants()
+		{
+			If (Control.Role = 0x2B && Control.Name = "Text")
+			{
+				Control.DoDefaultAction()
+			}
+		}
+	}
+}
+
 #IfWinActive ahk_exe EXCEL.EXE
 
 ; want : CTRL+ALT+LeftClick - select entire row
@@ -527,3 +559,4 @@ MSPaintFontSizeAdd(Value) {
 Return
 
 #IfWinActive
+
