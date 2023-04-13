@@ -483,7 +483,7 @@ Return
 	If (!StatusText) {
 		Return
 	}
-	FormatTime, DateTime,, dd/MM/yyyy,HH:mm ; update format if needed
+	FormatTime, DateTime,, MM/dd/yyyy,HH:mm ; update format if needed
 
 	MSPaintEnterTextMode()
 	Click
