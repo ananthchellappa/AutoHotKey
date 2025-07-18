@@ -121,6 +121,12 @@ SysGet, Mon2, Monitor, 2
     }
 Return
 
+^!+MButton::
+	Notify("Reloading", "", 3)
+	Sleep 1000  ; Give 1 second to read the message
+	Reload
+Return
+
 ^#T::FixYTURL()	; CTRL WIN T
 #p::LaunchPaint()
 #Escape::LaunchPaint()
