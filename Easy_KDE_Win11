@@ -316,3 +316,64 @@ else
 return
 ;;;;;;;;;;;;;;; from Rodfell on AHK forum
 
+; V1 only!! from chatGPT to get window throwing with ALT-3
+!3::
+    hwnd := WinExist("A")
+    if (!hwnd)
+        return
+
+    WinGetPos, x, y, w, h, ahk_id %hwnd%
+    cx := x + w/2
+    cy := y + h/2
+
+    SysGet, monCount, MonitorCount
+
+    ; Gather monitor left edges so we can sort left->right
+    ; We'll store arrays monL[i], monT[i], monR[i], monB[i]
+    Loop, %monCount% {
+        SysGet, M, Monitor, %A_Index%
+        monL%A_Index% := MLeft
+        monT%A_Index% := MTop
+        monR%A_Index% := MRight
+        monB%A_Index% := MBottom
+    }
+
+    ; Build an ordered list of monitor indices sorted by Left
+    order := ""
+    Loop, %monCount% {
+        best := 0
+        bestL := ""
+        Loop, %monCount% {
+            i := A_Index
+            if InStr("|" order "|", "|" i "|")
+                continue
+            L := monL%i%
+            if (best = 0 || L < bestL) {
+                best := i
+                bestL := L
+            }
+        }
+        order .= (order ? "|" : "") . best
+    }
+
+    ; Find current monitor position in the sorted order
+    curPos := 0
+    StringSplit, ord, order, |
+    Loop, %ord0% {
+        i := ord%A_Index%
+        if (cx >= monL%i% && cx < monR%i% && cy >= monT%i% && cy < monB%i%) {
+            curPos := A_Index
+            break
+        }
+    }
+    if (!curPos)
+        return
+
+    ; If on leftmost => go right, else go left (native Windows behavior)
+    if (curPos = 1)
+        Send, #+{Right}
+    else
+        Send, #+{Left}
+return
+
+
