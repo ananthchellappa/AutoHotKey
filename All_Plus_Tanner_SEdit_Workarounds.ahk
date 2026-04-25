@@ -1,0 +1,511 @@
+#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+; #Warn  ; Enable warnings to assist with detecting common errors.
+SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+
+; Easy Window Dragging -- KDE style (requires XP/2k/NT) -- by Jonny
+; https://www.autohotkey.com
+; This script makes it much easier to move or resize a window: 1) Hold down
+; the ALT key and LEFT-click anywhere inside a window to drag it to a new
+; location; 2) Hold down ALT and RIGHT-click-drag anywhere inside a window
+; to easily resize it; 3) Press ALT twice, but before releasing it the second
+; time, left-click to minimize the window under the mouse cursor, right-click
+; to maximize it, or middle-click to close it.
+
+; This script was inspired by and built on many like it
+; in the forum. Thanks go out to ck, thinkstorm, Chris,
+; and aurelian for a job well done.
+
+; Change history:
+; November 07, 2006: Optimized resizing code in !RButton, courtesy of bluedawn.
+; February 05, 2006: Fixed double-alt (the ~Alt hotkey) to work with latest versions of AHK.
+
+; The Double-Alt modifier is activated by pressing
+; Alt twice, much like a double-click. Hold the second
+; press down until you click.
+;
+; The shortcuts:
+;  Alt + Left Button  : Drag to move a window.
+;  Alt + Right Button : Drag to resize a window.
+;  Double-Alt + Left Button   : Minimize a window.
+;  Double-Alt + Right Button  : Maximize/Restore a window.
+;  Double-Alt + Middle Button : Close a window.
+;
+; You can optionally release Alt after the first
+; click rather than holding it down the whole time.
+
+If (A_AhkVersion < "1.0.39.00")
+{
+    MsgBox,20,,This script may not work properly with your version of AutoHotkey. Continue?
+    IfMsgBox,No
+    ExitApp
+}
+
+
+; This is the setting that runs smoothest on my
+; system. Depending on your video card and cpu
+; power, you may want to raise or lower this value.
+SetWinDelay,2
+
+CoordMode,Mouse
+return
+
+; if you have 2 monitors active - regardless of whether ID#1 is disconnected or not, AHK always sees 1,2, not 2,3 that Windows uses..
+SysGet, Mon1, Monitor, 1
+SysGet, Mon2, Monitor, 2
+
+; Ananth
+#Include C:\Users\ananth.chellappa\Documents\AutoHotKey\Notify.ahk
+^!F9::
+^!RButton::
+	Suspend
+	if A_IsSuspended 
+	{  
+		Notify("Suspended", "", 3)
+    } else
+    {
+		Notify("Resumed", "", 3)
+    }
+Return
+
+
+!LButton::
+If DoubleAlt
+{
+    MouseGetPos,,,KDE_id
+    ; This message is mostly equivalent to WinMinimize,
+    ; but it avoids a bug with PSPad.
+    PostMessage,0x112,0xf020,,,ahk_id %KDE_id%
+    DoubleAlt := false
+    return
+}
+; Get the initial mouse position and window id, and
+; abort if the window is maximized.
+MouseGetPos,KDE_X1,KDE_Y1,KDE_id
+WinGet,KDE_Win,MinMax,ahk_id %KDE_id%
+If KDE_Win
+    return
+; Get the initial window position.
+WinGetPos,KDE_WinX1,KDE_WinY1,,,ahk_id %KDE_id%
+Loop
+{
+    GetKeyState,KDE_Button,LButton,P ; Break if button has been released.
+    If KDE_Button = U
+        break
+    MouseGetPos,KDE_X2,KDE_Y2 ; Get the current mouse position.
+    KDE_X2 -= KDE_X1 ; Obtain an offset from the initial mouse position.
+    KDE_Y2 -= KDE_Y1
+    KDE_WinX2 := (KDE_WinX1 + KDE_X2) ; Apply this offset to the window position.
+    KDE_WinY2 := (KDE_WinY1 + KDE_Y2)
+    WinMove,ahk_id %KDE_id%,,%KDE_WinX2%,%KDE_WinY2% ; Move the window to the new position.
+}
+return
+
+!RButton::
+If DoubleAlt
+{
+    MouseGetPos,,,KDE_id
+    ; Toggle between maximized and restored state.
+    WinGet,KDE_Win,MinMax,ahk_id %KDE_id%
+    If KDE_Win
+        WinRestore,ahk_id %KDE_id%
+    Else
+        WinMaximize,ahk_id %KDE_id%
+    DoubleAlt := false
+    return
+}
+; Get the initial mouse position and window id, and
+; abort if the window is maximized.
+MouseGetPos,KDE_X1,KDE_Y1,KDE_id
+WinGet,KDE_Win,MinMax,ahk_id %KDE_id%
+If KDE_Win
+    return
+; Get the initial window position and size.
+WinGetPos,KDE_WinX1,KDE_WinY1,KDE_WinW,KDE_WinH,ahk_id %KDE_id%
+; Define the window region the mouse is currently in.
+; The four regions are Up and Left, Up and Right, Down and Left, Down and Right.
+If (KDE_X1 < KDE_WinX1 + KDE_WinW / 2)
+    KDE_WinLeft := 1
+Else
+    KDE_WinLeft := -1
+If (KDE_Y1 < KDE_WinY1 + KDE_WinH / 2)
+    KDE_WinUp := 1
+Else
+    KDE_WinUp := -1
+Loop
+{
+    GetKeyState,KDE_Button,RButton,P ; Break if button has been released.
+    If KDE_Button = U
+        break
+    MouseGetPos,KDE_X2,KDE_Y2 ; Get the current mouse position.
+    ; Get the current window position and size.
+    WinGetPos,KDE_WinX1,KDE_WinY1,KDE_WinW,KDE_WinH,ahk_id %KDE_id%
+    KDE_X2 -= KDE_X1 ; Obtain an offset from the initial mouse position.
+    KDE_Y2 -= KDE_Y1
+    ; Then, act according to the defined region.
+    WinMove,ahk_id %KDE_id%,, KDE_WinX1 + (KDE_WinLeft+1)/2*KDE_X2  ; X of resized window
+                            , KDE_WinY1 +   (KDE_WinUp+1)/2*KDE_Y2  ; Y of resized window
+                            , KDE_WinW  -     KDE_WinLeft  *KDE_X2  ; W of resized window
+                            , KDE_WinH  -       KDE_WinUp  *KDE_Y2  ; H of resized window
+    KDE_X1 := (KDE_X2 + KDE_X1) ; Reset the initial position for the next iteration.
+    KDE_Y1 := (KDE_Y2 + KDE_Y1)
+}
+return
+
+; "Alt + MButton" may be simpler, but I
+; like an extra measure of security for
+; an operation like this.
+!MButton::
+If DoubleAlt
+{
+    MouseGetPos,,,KDE_id
+    WinClose,ahk_id %KDE_id%
+    DoubleAlt := false
+    return
+}
+return
+
+; This detects "double-clicks" of the alt key.
+~Alt::
+DoubleAlt := A_PriorHotkey = "~Alt" AND A_TimeSincePriorHotkey < 400
+Sleep 0
+KeyWait Alt  ; This prevents the keyboard's auto-repeat feature from interfering.
+return
+
+; Ananth
+
+^Escape::
+WinMove,A,, 0, 0
+return
+
+; Inspired by using Alt-F1 on KDE to toggle maximization :)
+$!F1::
+ SetTitleMatchMode, 2
+ IfWinActive, Citrix XenApp
+ {
+  Send !{F1}
+ } else {
+  MouseGetPos,,,KDE_id
+  ; Toggle between maximized and restored state.
+  WinGet,KDE_Win,MinMax,ahk_id %KDE_id%
+  If KDE_Win
+   WinRestore,ahk_id %KDE_id%,,ETXServer ; ExcludeTitle : "ETXServer"
+  Else
+   WinMaximize,ahk_id %KDE_id%
+  DoubleAlt := false
+ }
+ SetTitleMatchMode, 1
+ return
+
+LaunchPaint()
+{
+ IfWinExist , Untitled - Paint
+ {
+  IfWinActive, Untitled - Paint
+  {
+   Run mspaint.exe
+  } else {
+   WinActivate , Untitled - Paint
+  }
+ } else {
+  Run mspaint.exe
+  WinWait , Untitled - Paint
+  WinActivate , Untitled - Paint
+ }
+}
+
+
+#p::LaunchPaint()
+
+
+
+#IfWinActive, Untitled - Paint
+   #F4::
+WinGet, paintPID, PID, A
+Process, Close, %paintPID%
+   Return
+#IfWinActive
+
+; der Hero Herr Gwarble : http://www.gwarble.com/ahk/Notify/
+~CapsLock::
+ {
+   if getkeystate("capslock","t")
+    {
+      Notify("CAPS", "CAPS ON", 3)
+    }
+   else
+    {
+      Notify("CAPS", "caps off", 3)
+    }
+ }
+return
+
+
+;; preparing for Rodfell's throwing script
+; This detects "double-clicks" of the CTRL key.
+~Ctrl::
+DoubleCtrl := A_PriorHotKey = "~Ctrl" AND A_TimeSincePriorHotkey < 400
+Sleep 0
+KeyWait Ctrl  ; This prevents the keyboard's auto-repeat feature from interfering.
+return
+;;;;;;;;;;;;;;; from Rodfell on AHK forum
+;SysGet, Mon1, Monitor, 1
+;SysGet, Mon2, Monitor, 2
+;MsgBox, Left: %Mon2Left% -- Top: %Mon2Top% -- Right: %Mon2Right% -- Bottom %Mon2Bottom%.
+
+; ~ prefix added by Houli Wang
+~^LButton::
+KeyWait, Lbutton
+If DoubleCtrl
+{
+ DoubleCtrl := false
+ ; verified that this is called as expected..
+ mousegetpos,,,windowtomove
+ gosub windowmove
+ return
+}
+;Send {Ctrl Down}{Click down} ; thanks to Trik's response to Alan Stancliff
+return
+windowmove:
+;MsgBox, Left: %Mon2Left% -- Top: %Mon2Top% -- Right: %Mon2Right% -- Bottom %Mon2Bottom%.
+if ("" == Mon2Left )
+{
+ ;MsgBox No Way Jose
+ return
+}
+
+wingetpos,x1,y1,w1,h1,ahk_id %windowtomove%
+winget,winstate,minmax,ahk_id %windowtomove%
+m1:=(x1+w1/2>mon1left) and (x1+w1/2<mon1right) and (y1+h1/2>mon1top) and (y1+h1/2<mon1bottom) ? 1:2   ;works out if centre of window is on monitor 1 (m1=1) or monitor 2 (m1=2)
+m2:=m1=1 ? 2:1  ;m2 is the monitor the window will be moved to
+ratiox:=abs(mon%m1%right-mon%m1%left)-w1<5 ? 0:abs((x1-mon%m1%left)/(abs(mon%m1%right-mon%m1%left)-w1))  ;where the window fits on x axis
+ratioy:=abs(mon%m1%bottom-mon%m1%top)-h1<5 ? 0:abs((y1-mon%m1%top)/(abs(mon%m1%bottom-mon%m1%top)-h1))   ;where the window fits on y axis
+x2:=mon%m2%left+ratiox*(abs(mon%m2%right-mon%m2%left)-w1)   ;where the window will fit on x axis in normal situation
+y2:=mon%m2%top+ratioy*(abs(mon%m2%bottom-mon%m2%top)-h1)
+w2:=w1  
+h2:=h1   ;width and height will stay the same when moving unless reason not to lower in script
+if abs(mon%m1%right-mon%m1%left)-w1<5 or abs(mon%m2%right-mon%m2%left-w1)<5   ;if x axis takes up whole axis OR won't fit on new screen
+   {
+   x2:=mon%m2%left  
+   w2:=abs(mon%m2%right-mon%m2%left)
+   }
+if abs(mon%m1%bottom-mon%m1%top)-h1<5 or abs(mon%m2%bottom-mon%m2%top)-h1<5
+   {
+   y2:=mon%m2%top
+   h2:=abs(mon%m2%bottom-mon%m2%top)
+   }
+if winstate   ;move maximized window
+   {
+   winrestore,ahk_id %windowtomove%
+   winmove,ahk_id %windowtomove%,,mon%m2%left,mon%m2%top
+   winmaximize,ahk_id %windowtomove%
+   }
+else
+   {
+   if (x1<mon%m1%left)
+      x2:=mon%m2%left   ;adjustments for windows that are not fully on the initial monitor (m1)
+   if (x1+w1>mon%m1%right)
+      x2:=mon%m2%right-w2
+   if (y1<mon%m1%top)
+      y2:=mon%m2%top
+   if (y1+h1>mon%m1%bottom)
+      y2:=mon%m2%bottom-h2
+   winmove,ahk_id %windowtomove%,,x2,y2,w2,h2   ;move non-maximized window
+   winmaximize, ahk_id %windowtomove%
+   }
+return
+;;;;;;;;;;;;;;; from Rodfell on AHK forum
+
+
+; 2/3/26 from chatGPT - wantz to use ALT-3 to throw window
+
+!3::
+    hwnd := WinExist("A")
+    if (!hwnd)
+        return
+
+    WinGetPos, x, y, w, h, ahk_id %hwnd%
+    cx := x + w/2
+    cy := y + h/2
+
+    SysGet, monCount, MonitorCount
+
+    ; Gather monitor left edges so we can sort left->right
+    ; We'll store arrays monL[i], monT[i], monR[i], monB[i]
+    Loop, %monCount% {
+        SysGet, M, Monitor, %A_Index%
+        monL%A_Index% := MLeft
+        monT%A_Index% := MTop
+        monR%A_Index% := MRight
+        monB%A_Index% := MBottom
+    }
+
+    ; Build an ordered list of monitor indices sorted by Left
+    order := ""
+    Loop, %monCount% {
+        best := 0
+        bestL := ""
+        Loop, %monCount% {
+            i := A_Index
+            if InStr("|" order "|", "|" i "|")
+                continue
+            L := monL%i%
+            if (best = 0 || L < bestL) {
+                best := i
+                bestL := L
+            }
+        }
+        order .= (order ? "|" : "") . best
+    }
+
+    ; Find current monitor position in the sorted order
+    curPos := 0
+    StringSplit, ord, order, |
+    Loop, %ord0% {
+        i := ord%A_Index%
+        if (cx >= monL%i% && cx < monR%i% && cy >= monT%i% && cy < monB%i%) {
+            curPos := A_Index
+            break
+        }
+    }
+    if (!curPos)
+        return
+
+    ; If on leftmost => go right, else go left (native Windows behavior)
+    if (curPos = 1)
+        Send, #+{Right}
+    else
+        Send, #+{Left}
+return
+
+; 2/9/26
+;#IfWinActive, S-Edit
+; 2/12/26
+#IfWinActive ahk_exe sedit64.exe
+
+; Make mouse coords consistent with ControlClick/Click
+CoordMode, Mouse, Client
+
+; Optional: make sending snappier
+SetKeyDelay, -1
+SetMouseDelay, -1
+
+RButton::
+{
+    MouseGetPos, sx, sy
+
+    ; Wait a short moment to see if this becomes a drag
+    Loop
+    {
+        Sleep, 20
+        MouseGetPos, cx, cy
+
+        ; If RMB released before dragging => treat as normal right click
+        if (!GetKeyState("RButton","P"))
+        {
+            Click, Right
+            return
+        }
+
+        ; Drag threshold
+        if (Abs(cx - sx) > 5 || Abs(cy - sy) > 5)
+        {
+            ; Enter zoom mode (your S-Edit hotkey)
+            SendInput, z
+
+            ; Press-and-hold LEFT at the starting point (client coords)
+            ; Using Click here is often more reliable than ControlClick for drag gestures.
+            Click, %sx%, %sy%, Left, Down
+
+            ; Hold until RMB released, then release left
+            KeyWait, RButton
+            Click, Left, Up
+            return
+        }
+    }
+}
+
+	^+WheelUp::
+	    SendInput, ^+{Up}
+	Return
+
+	^+WheelDown::
+	    SendInput, ^+{Down}
+	Return
+
+    !1 Up::
+	WinActivate, ahk_exe WaveformViewer64.exe
+	Sleep, 50
+	SendEvent {Alt}
+	Sleep, 20
+	SendInput p
+	; Send {Alt Down}{Alt Up}{Right}{Right}{Right}{Right}{Right}{Right}{Right}{Right}{Enter}	; new plot at top
+	; depends on the Button text as TCL button being available..
+	Sleep, 20
+	WinActivate, ahk_exe sedit64.exe
+	Sleep, 20
+	Send !2
+	Return
+
+#IfWinActive
+
+; 2/20/26
+;#IfWinActive ahk_exe WaveformViewer64.exe 
+; 3/3/26 - above gets even Command window of Waveform Viewer :)
+#IfWinActive Custom IC Waveform Viewer
+
+; Make mouse coords consistent with ControlClick/Click
+CoordMode, Mouse, Client
+
+; Optional: make sending snappier
+SetKeyDelay, -1
+SetMouseDelay, -1
+
+RButton::
+{
+    MouseGetPos, sx, sy
+
+    ; Wait a short moment to see if this becomes a drag
+    Loop
+    {
+        Sleep, 20
+        MouseGetPos, cx, cy
+
+        ; If RMB released before dragging => treat as normal right click
+        if (!GetKeyState("RButton","P"))
+        {
+            Click, Right
+            return
+        }
+
+        ; Drag threshold
+        if (Abs(cx - sx) > 5 || Abs(cy - sy) > 5)
+        {
+            ; Enter zoom mode (your S-Edit hotkey)
+            SendInput, z
+
+            ; Press-and-hold LEFT at the starting point (client coords)
+            ; Using Click here is often more reliable than ControlClick for drag gestures.
+            Click, %sx%, %sy%, Left, Down
+
+            ; Hold until RMB released, then release left
+            KeyWait, RButton
+            Click, Left, Up
+            return
+        }
+    }
+}
+
+;!1:: Send {Alt Down}{Alt Up}{Right}{Right}{Right}{Right}{Right}{Right}{Right}{Right}{Enter}	; new plot at top
+	; depends on the Button text as TCL button being available..
+!1:: Send {Alt Down}{Alt Up}p ; takes advantage of fact that the button is called "plot add 1"
+
+    ^d Up::
+	Send ^w
+	Sleep, 20
+	Send !n
+Return
+
+^n:: Send !n
+
+#IfWinActive
