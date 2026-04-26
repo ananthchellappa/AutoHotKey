@@ -425,12 +425,31 @@ RButton::
     }
 }
 
+; CTRL SHIFT Scroll_Up
 	^+WheelUp::
 	    SendInput, ^+{Up}
 	Return
 
 	^+WheelDown::
 	    SendInput, ^+{Down}
+	Return
+
+; ALT Scroll_up
+	!WheelUp::
+		SendInput, !{NumpadAdd}
+	Return
+
+	!WheelDown::
+		SendInput, !{NumpadSub}
+	Return
+
+; ALT Shift Scroll_Up
+	!+WheelUp::
+		SendInput, ^{Up}
+	Return
+
+	!+WheelDown::
+		SendInput, ^{Down}
 	Return
 
     !1 Up::
