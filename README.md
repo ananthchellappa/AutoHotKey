@@ -4,8 +4,12 @@ The script that has boosted my productivity immensely for the last ten years.
 
 How to use :
 
-Put the EasyWindowDrag_KDE.ahk script in your Startup folder (fire up Windows File Explorer and just type "startup").
-Put the Lib directory in the same folder.
+Pick the script that matches your AutoHotkey version and put it in your Startup folder (fire up Windows File Explorer and just type "startup") :
+
+- AutoHotkey v1.1 : EasyWindowDrag_KDE.ahk
+- AutoHotkey v2 : EasyWindowDrag_KDE_v2.ahk
+
+Put the Lib directory in the same folder. Run one or the other, never both - they define the same hotkeys.
 
 And you're in business. Enjoy the productivity boost! Thank the genius who wrote that script to mimic KDE's drag/resize.
 
